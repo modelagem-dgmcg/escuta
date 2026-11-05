@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f3337">
+<title>Escuta</title>
+<style>
+  :root{
+    --bg:#f2f3f4; --card:#ffffff; --txt:#25292c; --mut:#6a7177; --linha:#d5d8db;
+    --grafite:#2f3337; --bordo:#7a1f2b; --ok:#2d6a4f;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#1b1e20; --card:#25292c; --txt:#eceeef; --mut:#9aa1a6; --linha:#3a3f43; --grafite:#454b50; --bordo:#a8404e; --ok:#52b788; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;}
+  header{background:var(--grafite);color:#fff;padding:18px 16px 16px}
+  header h1{margin:0;font-size:22px;font-weight:600;letter-spacing:.2px}
+  header p{margin:4px 0 0;font-size:14px;opacity:.85}
+  main{max-width:640px;margin:0 auto;padding:16px}
+  .card{background:var(--card);border:1px solid var(--linha);border-radius:12px;padding:16px;margin-bottom:14px}
+  label{display:block;font-size:14px;color:var(--mut);margin:12px 0 4px}
+  label:first-child{margin-top:0}
+  input,textarea{width:100%;font:inherit;color:var(--txt);background:var(--card);border:1px solid var(--linha);border-radius:8px;padding:10px 12px}
+  textarea{min-height:220px;resize:vertical}
+  .isca{position:absolute;left:-9999px;height:0;width:0;opacity:0}
+  button{font:inherit;border:0;border-radius:10px;padding:14px 18px;cursor:pointer;width:100%}
+  .rec{background:var(--grafite);color:#fff;font-weight:600}
+  .rec.gravando{background:var(--bordo)}
+  .env{background:var(--ok);color:#fff;font-weight:600;margin-top:10px}
+  .sec{background:transparent;color:var(--mut);border:1px solid var(--linha);margin-top:10px}
+  button:disabled{opacity:.5;cursor:default}
+  .estado{font-size:14px;color:var(--mut);margin:8px 0 0;min-height:20px}
+  .estado.gravando{color:var(--bordo);font-weight:600}
+  .aviso{font-size:13px;color:var(--mut)}
+  .msg{padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:15px}
+  .msg.ok{background:rgba(45,106,79,.14);border:1px solid var(--ok)}
+  .msg.erro{background:rgba(122,31,43,.12);border:1px solid var(--bordo)}
+  footer{text-align:center;font-size:12px;color:var(--mut);padding:8px 16px 28px}
+  .oculto{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Escuta</h1>
+  <p>Conte o que acontece no seu trabalho. A gente quer entender para ajudar.</p>
+</header>
+
+<main>
+  <div id="msg" class="msg oculto"></div>
+
+  <section class="card" id="telaForm">
+    <label for="nome">Seu nome</label>
+    <input id="nome" autocomplete="name" placeholder="Nome e sobrenome">
+
+    <label for="setor">Setor</label>
+    <input id="setor" placeholder="Ex.: Gerência de Gestão de Processos">
+
+    <label for="funcao">Função</label>
+    <input id="funcao" placeholder="Ex.: Analista, Gerente, Técnico">
+
+    <label for="tema">Tema ou assunto (opcional)</label>
+    <input id="tema" placeholder="Dê um nome ao que você vai contar">
+
+    <input id="site" class="isca" tabindex="-1" autocomplete="off" aria-hidden="true">
+  </section>
+
+  <section class="card">
+    <button id="btnRec" class="rec" type="button">Iniciar gravação</button>
+    <p id="estado" class="estado"></p>
+
+    <label for="texto">O que você falou (você pode corrigir antes de enviar)</label>
+    <textarea id="texto" placeholder="A transcrição aparece aqui. Se preferir, é possível digitar."></textarea>
+
+    <button id="btnEnv" class="env" type="button">Enviar</button>
+    <button id="btnLimpar" class="sec" type="button">Apagar e recomeçar</button>
+    <p class="aviso" style="margin-top:12px">
+      O áudio não é guardado, só o texto. O que você enviar será lido pela equipe de gestão
+      para entender os problemas e buscar soluções.
+    </p>
+  </section>
+</main>
+
+<footer>© 2026 SES-PE — DGMCG/GGPCG. Desenvolvido por Cleuton Vieira.</footer>
+
+<script>
+/* Endereço do envio (Apps Script publicado como aplicativo da Web). Preenchido depois da implantação. */
+const API = 'https://script.google.com/macros/s/AKfycbwMsqEH7dPOYew8AybByxIC8q_ABdJ8H9wSxukHZsdllj-SI-VWoZw2JXaLosmvgGOa/exec';
+
+const $ = id => document.getElementById(id);
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, gravando = false, base = '', finais = '', wake = null, enviado = true;
+
+function lembrar(chave, valor){ try{ localStorage.setItem('escuta_'+chave, valor); }catch(e){} }
+function recuperar(chave){ try{ return localStorage.getItem('escuta_'+chave) || ''; }catch(e){ return ''; } }
+
+['nome','setor','funcao'].forEach(c=>{
+  $(c).value = recuperar(c);
+  $(c).addEventListener('input', ()=>lembrar(c, $(c).value));
+});
+
+function mostrar(tipo, texto){
+  const m = $('msg');
+  m.className = 'msg ' + tipo;
+  m.textContent = texto;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function esconderMsg(){ $('msg').className = 'msg oculto'; }
+
+$('texto').addEventListener('input', ()=>{ enviado = false; });
+
+async function manterTelaLigada(){
+  try{ if('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); }catch(e){}
+}
+function soltarTela(){ try{ if(wake){ wake.release(); wake = null; } }catch(e){} }
+
+function iniciar(){
+  if(!SR){
+    $('estado').textContent = 'Este navegador não transcreve sozinho. Toque na caixa de texto e use o microfone do teclado do celular.';
+    return;
+  }
+  esconderMsg();
+  rec = new SR();
+  rec.lang = 'pt-BR';
+  rec.continuous = true;
+  rec.interimResults = true;
+  const t = $('texto').value.trim();
+  base = t ? t + ' ' : '';
+  finais = '';
+
+  rec.onresult = ev => {
+    let parcial = '';
+    for(let i = ev.resultIndex; i < ev.results.length; i++){
+      const trecho = ev.results[i][0].transcript;
+      if(ev.results[i].isFinal) finais += trecho + ' ';
+      else parcial += trecho;
+    }
+    $('texto').value = base + finais + parcial;
+    enviado = false;
+  };
+  rec.onerror = ev => {
+    if(ev.error === 'not-allowed' || ev.error === 'service-not-allowed'){
+      parar();
+      mostrar('erro', 'O microfone não foi liberado. Permita o uso do microfone no navegador e tente de novo.');
+    }
+  };
+  rec.onend = () => {
+    if(gravando){
+      base = $('texto').value.trim();
+      base = base ? base + ' ' : '';
+      finais = '';
+      try{ rec.start(); }catch(e){}
+    }
+  };
+  gravando = true;
+  try{ rec.start(); }catch(e){}
+  manterTelaLigada();
+  $('btnRec').textContent = 'Parar gravação';
+  $('btnRec').classList.add('gravando');
+  $('estado').textContent = 'Gravando… pode falar.';
+  $('estado').classList.add('gravando');
+}
+
+function parar(){
+  gravando = false;
+  try{ if(rec) rec.stop(); }catch(e){}
+  soltarTela();
+  $('btnRec').textContent = 'Continuar gravação';
+  $('btnRec').classList.remove('gravando');
+  $('estado').classList.remove('gravando');
+  $('estado').textContent = 'Gravação parada. Confira o texto e envie.';
+}
+
+$('btnRec').addEventListener('click', ()=> gravando ? parar() : iniciar());
+
+$('btnLimpar').addEventListener('click', ()=>{
+  if(gravando) parar();
+  if($('texto').value.trim() && !confirm('Apagar o que foi transcrito?')) return;
+  $('texto').value = '';
+  $('estado').textContent = '';
+  $('btnRec').textContent = 'Iniciar gravação';
+  enviado = true;
+});
+
+$('btnEnv').addEventListener('click', async ()=>{
+  if(gravando) parar();
+  const dados = {
+    nome: $('nome').value.trim(),
+    setor: $('setor').value.trim(),
+    funcao: $('funcao').value.trim(),
+    tema: $('tema').value.trim(),
+    texto: $('texto').value.trim(),
+    site: $('site').value
+  };
+  if(!dados.nome || !dados.setor || !dados.funcao){
+    mostrar('erro', 'Preencha seu nome, setor e função.');
+    return;
+  }
+  if(!dados.texto){
+    mostrar('erro', 'Ainda não há nada para enviar. Grave ou digite sua fala.');
+    return;
+  }
+  if(!API){
+    mostrar('erro', 'O endereço de envio ainda não foi configurado. Avise quem criou a página.');
+    return;
+  }
+  $('btnEnv').disabled = true;
+  $('btnEnv').textContent = 'Enviando…';
+  try{
+    const r = await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(dados)
+    });
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.erro || 'Não foi possível enviar.');
+    $('texto').value = '';
+    $('tema').value = '';
+    $('estado').textContent = '';
+    $('btnRec').textContent = 'Iniciar gravação';
+    enviado = true;
+    mostrar('ok', 'Recebemos sua fala. Muito obrigado por contar o que acontece: é assim que a gente consegue entender e buscar solução.');
+  }catch(err){
+    mostrar('erro', 'Não foi possível enviar agora (' + err.message + '). Seu texto continua aqui, tente de novo em instantes.');
+  }finally{
+    $('btnEnv').disabled = false;
+    $('btnEnv').textContent = 'Enviar';
+  }
+});
+
+window.addEventListener('beforeunload', e=>{
+  if(!enviado && $('texto').value.trim()){ e.preventDefault(); e.returnValue = ''; }
+});
+</script>
+</body>
+</html>
