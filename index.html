@@ -3,235 +3,363 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2f3337">
+<meta name="theme-color" content="#2b2f33">
 <title>Escuta</title>
 <style>
   :root{
-    --bg:#f2f3f4; --card:#ffffff; --txt:#25292c; --mut:#6a7177; --linha:#d5d8db;
-    --grafite:#2f3337; --bordo:#7a1f2b; --ok:#2d6a4f;
+    --bg:#eceef0; --card:#ffffff; --campo:#f6f7f8; --txt:#22262a; --mut:#69717a; --linha:#d9dcdf;
+    --grafite:#2f3337; --bordo:#8a2433; --bordo2:#b4384a; --ok:#2d6a4f; --ok2:#38805f;
   }
   @media (prefers-color-scheme: dark){
-    :root{ --bg:#1b1e20; --card:#25292c; --txt:#eceeef; --mut:#9aa1a6; --linha:#3a3f43; --grafite:#454b50; --bordo:#a8404e; --ok:#52b788; }
+    :root{ --bg:#17191b; --card:#222629; --campo:#1b1e20; --txt:#eceeef; --mut:#9aa1a6; --linha:#363b3f; --ok:#3d8b68; --ok2:#4aa17a; }
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;}
-  header{background:var(--grafite);color:#fff;padding:18px 16px 16px}
-  header h1{margin:0;font-size:22px;font-weight:600;letter-spacing:.2px}
-  header p{margin:4px 0 0;font-size:14px;opacity:.85}
-  main{max-width:640px;margin:0 auto;padding:16px}
-  .card{background:var(--card);border:1px solid var(--linha);border-radius:12px;padding:16px;margin-bottom:14px}
-  label{display:block;font-size:14px;color:var(--mut);margin:12px 0 4px}
-  label:first-child{margin-top:0}
-  input,textarea{width:100%;font:inherit;color:var(--txt);background:var(--card);border:1px solid var(--linha);border-radius:8px;padding:10px 12px}
-  textarea{min-height:220px;resize:vertical}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .topo{padding:22px 16px 6px;max-width:760px;margin:0 auto}
+  .topo h1{margin:0;font-size:26px;font-weight:650;letter-spacing:.2px}
+  .topo p{margin:4px 0 0;color:var(--mut);font-size:15px}
+  main{max-width:760px;margin:0 auto;padding:12px 16px 8px}
+  .card{background:var(--card);border:1px solid var(--linha);border-radius:16px;padding:18px;margin-bottom:16px}
+  .card h2{margin:0 0 12px;font-size:13px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--mut)}
+  .grade{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:640px){ .grade{grid-template-columns:1fr 1fr} .grade .larga{grid-column:1/-1} }
+  label{display:block;font-size:13px;color:var(--mut);margin:0 0 4px}
+  input,textarea{width:100%;font:inherit;color:var(--txt);background:var(--campo);border:1px solid var(--linha);border-radius:10px;padding:11px 12px;outline:none}
+  input:focus,textarea:focus{border-color:var(--grafite);box-shadow:0 0 0 3px rgba(47,51,55,.15)}
   .isca{position:absolute;left:-9999px;height:0;width:0;opacity:0}
-  button{font:inherit;border:0;border-radius:10px;padding:14px 18px;cursor:pointer;width:100%}
-  .rec{background:var(--grafite);color:#fff;font-weight:600}
-  .rec.gravando{background:var(--bordo)}
-  .env{background:var(--ok);color:#fff;font-weight:600;margin-top:10px}
-  .sec{background:transparent;color:var(--mut);border:1px solid var(--linha);margin-top:10px}
-  button:disabled{opacity:.5;cursor:default}
-  .estado{font-size:14px;color:var(--mut);margin:8px 0 0;min-height:20px}
-  .estado.gravando{color:var(--bordo);font-weight:600}
-  .aviso{font-size:13px;color:var(--mut)}
-  .msg{padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:15px}
+
+  /* gravador */
+  .player{background:linear-gradient(180deg,#363b40,#25292d);color:#fff;border:0;padding:22px 18px 20px;text-align:center}
+  .player h2{color:#a9b0b6}
+  .estado{display:inline-flex;align-items:center;gap:8px;font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:#c5cbd0;min-height:22px}
+  .ponto{width:9px;height:9px;border-radius:50%;background:#6b737a}
+  .rec .ponto{background:#ff5d6e;animation:pisca 1.1s infinite}
+  .pausa .ponto{background:#e0b84a}
+  .fim .ponto{background:#52b788}
+  @keyframes pisca{50%{opacity:.25}}
+  .tempo{font-size:58px;font-weight:300;letter-spacing:2px;font-variant-numeric:tabular-nums;margin:6px 0 10px;line-height:1.05}
+  .ondas{display:flex;align-items:center;justify-content:center;gap:3px;height:46px;margin:0 auto 18px;max-width:420px}
+  .ondas span{flex:1;max-width:8px;height:100%;border-radius:4px;background:#8b949b;transform:scaleY(.1);transform-origin:center;transition:transform .25s,background .25s}
+  .rec .ondas span{background:#ff7d8b;animation:onda 1.4s ease-in-out infinite;animation-delay:var(--d);transform:scaleY(.18)}
+  .rec.falando .ondas span{animation:fala .5s ease-in-out infinite alternate;animation-delay:var(--d)}
+  @keyframes onda{50%{transform:scaleY(.3)}}
+  @keyframes fala{from{transform:scaleY(.2)}to{transform:scaleY(var(--h))}}
+  .controles{display:flex;align-items:flex-start;justify-content:center;gap:26px}
+  .ctl{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:12px;color:#b8bfc5;width:84px}
+  .ctl button{border:0;cursor:pointer;color:#fff;display:grid;place-items:center;border-radius:50%;transition:transform .12s,background .2s,opacity .2s}
+  .ctl button:active{transform:scale(.94)}
+  .ctl button:disabled{opacity:.35;cursor:default;transform:none}
+  .ctl button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+  .sec{width:52px;height:52px;background:rgba(255,255,255,.12)}
+  .sec:hover:not(:disabled){background:rgba(255,255,255,.2)}
+  .sec svg{width:22px;height:22px}
+  .principal{width:82px;height:82px;background:var(--bordo2);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .principal:hover{background:#c2475a}
+  .principal svg{width:34px;height:34px}
+  .rec .principal{background:#4a5157}
+  .rec .principal:hover{background:#565e65}
+  .ctl .confirma{background:var(--bordo2)}
+  .dica{margin:16px 0 0;font-size:13px;color:#aab1b7;min-height:20px}
+
+  textarea{min-height:200px;resize:vertical;line-height:1.5}
+  .rodape-texto{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-top:6px}
+  .btn{font:inherit;border:0;border-radius:12px;padding:15px 18px;cursor:pointer;width:100%;font-weight:600}
+  .env{background:var(--ok);color:#fff;margin-top:14px}
+  .env:hover:not(:disabled){background:var(--ok2)}
+  .btn:disabled{opacity:.45;cursor:default}
+  .aviso{font-size:13px;color:var(--mut);margin:12px 0 0}
+  .msg{padding:13px 15px;border-radius:12px;margin:0 0 16px;font-size:15px}
   .msg.ok{background:rgba(45,106,79,.14);border:1px solid var(--ok)}
-  .msg.erro{background:rgba(122,31,43,.12);border:1px solid var(--bordo)}
-  footer{text-align:center;font-size:12px;color:var(--mut);padding:8px 16px 28px}
+  .msg.erro{background:rgba(138,36,51,.12);border:1px solid var(--bordo)}
   .oculto{display:none}
+  footer{text-align:center;font-size:12px;color:var(--mut);padding:6px 16px 32px}
+  @media (prefers-reduced-motion: reduce){ .rec .ponto,.ondas span{animation:none!important} }
 </style>
 </head>
 <body>
-<header>
+<div class="topo">
   <h1>Escuta</h1>
   <p>Conte o que acontece no seu trabalho. A gente quer entender para ajudar.</p>
-</header>
+</div>
 
 <main>
-  <div id="msg" class="msg oculto"></div>
+  <div id="msg" class="msg oculto" role="status"></div>
 
-  <section class="card" id="telaForm">
-    <label for="nome">Seu nome</label>
-    <input id="nome" autocomplete="name" placeholder="Nome e sobrenome">
-
-    <label for="setor">Setor</label>
-    <input id="setor" placeholder="Ex.: Gerência de Gestão de Processos">
-
-    <label for="funcao">Função</label>
-    <input id="funcao" placeholder="Ex.: Analista, Gerente, Técnico">
-
-    <label for="tema">Tema ou assunto (opcional)</label>
-    <input id="tema" placeholder="Dê um nome ao que você vai contar">
-
+  <section class="card">
+    <h2>Quem está falando</h2>
+    <div class="grade">
+      <div><label for="nome">Nome</label><input id="nome" autocomplete="name" placeholder="Nome e sobrenome"></div>
+      <div><label for="funcao">Função</label><input id="funcao" placeholder="Ex.: Analista, Gerente, Técnico"></div>
+      <div class="larga"><label for="setor">Setor</label><input id="setor" placeholder="Ex.: Gerência de Gestão de Processos"></div>
+      <div class="larga"><label for="tema">Tema ou assunto (opcional)</label><input id="tema" placeholder="Dê um nome ao que você vai contar"></div>
+    </div>
     <input id="site" class="isca" tabindex="-1" autocomplete="off" aria-hidden="true">
   </section>
 
+  <section class="card player" id="player">
+    <h2>Gravador</h2>
+    <div class="estado"><span class="ponto"></span><span id="estadoTxt">Pronto para gravar</span></div>
+    <div class="tempo" id="tempo" aria-live="off">00:00</div>
+    <div class="ondas" id="ondas" aria-hidden="true"></div>
+
+    <div class="controles">
+      <div class="ctl">
+        <button id="btnApagar" class="sec" type="button" aria-label="Apagar tudo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6"/></svg>
+        </button>
+        <span id="rotApagar">Apagar</span>
+      </div>
+      <div class="ctl">
+        <button id="btnPrincipal" class="principal" type="button" aria-label="Gravar">
+          <svg id="icoPrincipal" viewBox="0 0 24 24" fill="currentColor"></svg>
+        </button>
+        <span id="rotPrincipal">Gravar</span>
+      </div>
+      <div class="ctl">
+        <button id="btnFinalizar" class="sec" type="button" aria-label="Finalizar gravação" disabled>
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        </button>
+        <span>Finalizar</span>
+      </div>
+    </div>
+    <p class="dica" id="dica"></p>
+  </section>
+
   <section class="card">
-    <button id="btnRec" class="rec" type="button">Iniciar gravação</button>
-    <p id="estado" class="estado"></p>
-
-    <label for="texto">O que você falou (você pode corrigir antes de enviar)</label>
-    <textarea id="texto" placeholder="A transcrição aparece aqui. Se preferir, é possível digitar."></textarea>
-
-    <button id="btnEnv" class="env" type="button">Enviar</button>
-    <button id="btnLimpar" class="sec" type="button">Apagar e recomeçar</button>
-    <p class="aviso" style="margin-top:12px">
-      O áudio não é guardado, só o texto. O que você enviar será lido pela equipe de gestão
-      para entender os problemas e buscar soluções.
-    </p>
+    <h2>O que você falou</h2>
+    <label for="texto" class="oculto">Texto</label>
+    <textarea id="texto" placeholder="A transcrição aparece aqui enquanto você fala. Você pode corrigir ou digitar antes de enviar."></textarea>
+    <div class="rodape-texto"><span id="contagem">0 palavras</span><span>Só o texto é guardado, o áudio não.</span></div>
+    <button id="btnEnv" class="btn env" type="button" disabled>Enviar</button>
+    <p class="aviso">O que você enviar será lido pela equipe de gestão para entender os problemas e buscar soluções.</p>
   </section>
 </main>
 
 <footer>© 2026 SES-PE — DGMCG/GGPCG. Desenvolvido por Cleuton Vieira.</footer>
 
 <script>
-/* Endereço do envio (Apps Script publicado como aplicativo da Web). Preenchido depois da implantação. */
 const API = 'https://script.google.com/macros/s/AKfycbwdx35h27UvuuRN5SNGGW_kML3EgXWBhr_iDvlc_Q_fconXW87b5nhc7UaNvozeLTSx/exec';
 
 const $ = id => document.getElementById(id);
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec = null, gravando = false, base = '', finais = '', wake = null, enviado = true;
 
-function lembrar(chave, valor){ try{ localStorage.setItem('escuta_'+chave, valor); }catch(e){} }
-function recuperar(chave){ try{ return localStorage.getItem('escuta_'+chave) || ''; }catch(e){ return ''; } }
+const ICO = {
+  gravar: '<circle cx="12" cy="12" r="7"/>',
+  pausar: '<rect x="6" y="5" width="4.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="4.5" height="14" rx="1.5"/>'
+};
 
+let estado = 'idle';           // idle | rec | pausa | fim
+let rec = null, base = '', finais = '';
+let msAcum = 0, t0 = 0, tick = null;
+let wake = null, enviado = true, falaTimer = null, apagarTimer = null;
+
+/* ---------- campos lembrados neste aparelho ---------- */
+function lembrar(c, v){ try{ localStorage.setItem('escuta_'+c, v); }catch(e){} }
+function recuperar(c){ try{ return localStorage.getItem('escuta_'+c) || ''; }catch(e){ return ''; } }
 ['nome','setor','funcao'].forEach(c=>{
   $(c).value = recuperar(c);
   $(c).addEventListener('input', ()=>lembrar(c, $(c).value));
 });
 
+/* ---------- ondas ---------- */
+(function(){
+  const o = $('ondas');
+  for(let i=0;i<36;i++){
+    const s = document.createElement('span');
+    s.style.setProperty('--d', (Math.random()*-1.2).toFixed(2)+'s');
+    s.style.setProperty('--h', (0.35+Math.random()*0.65).toFixed(2));
+    o.appendChild(s);
+  }
+})();
+
+/* ---------- mensagens ---------- */
 function mostrar(tipo, texto){
-  const m = $('msg');
-  m.className = 'msg ' + tipo;
-  m.textContent = texto;
+  const m = $('msg'); m.className = 'msg ' + tipo; m.textContent = texto;
   window.scrollTo({top:0, behavior:'smooth'});
 }
 function esconderMsg(){ $('msg').className = 'msg oculto'; }
 
-$('texto').addEventListener('input', ()=>{ enviado = false; });
-
-async function manterTelaLigada(){
-  try{ if('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); }catch(e){}
+/* ---------- tempo ---------- */
+function fmt(ms){
+  const s = Math.floor(ms/1000), m = Math.floor(s/60);
+  return String(m).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
 }
-function soltarTela(){ try{ if(wake){ wake.release(); wake = null; } }catch(e){} }
+function atualizaTempo(){ $('tempo').textContent = fmt(msAcum + (estado==='rec' ? Date.now()-t0 : 0)); }
+function ligaRelogio(){ t0 = Date.now(); clearInterval(tick); tick = setInterval(atualizaTempo, 250); }
+function paraRelogio(){ if(estado==='rec') msAcum += Date.now()-t0; clearInterval(tick); atualizaTempo(); }
 
-function iniciar(){
-  if(!SR){
-    $('estado').textContent = 'Este navegador não transcreve sozinho. Toque na caixa de texto e use o microfone do teclado do celular.';
-    return;
-  }
-  esconderMsg();
+/* ---------- tela ---------- */
+function texto(){ return $('texto').value.trim(); }
+function atualizaContagem(){
+  const t = texto();
+  const n = t ? t.split(/\s+/).length : 0;
+  $('contagem').textContent = n + (n===1 ? ' palavra' : ' palavras');
+  $('btnEnv').disabled = !t;
+}
+function desenha(){
+  const p = $('player');
+  p.classList.remove('rec','pausa','fim','falando');
+  if(estado!=='idle') p.classList.add(estado);
+  const r = { idle:['Pronto para gravar','Gravar','gravar'],
+              rec:['Gravando','Pausar','pausar'],
+              pausa:['Em pausa','Continuar','gravar'],
+              fim:['Gravação finalizada','Gravar mais','gravar'] }[estado];
+  $('estadoTxt').textContent = r[0];
+  $('rotPrincipal').textContent = r[1];
+  $('btnPrincipal').setAttribute('aria-label', r[1]);
+  $('icoPrincipal').innerHTML = ICO[r[2]];
+  $('btnFinalizar').disabled = !(estado==='rec' || estado==='pausa');
+  const dicas = {
+    idle: SR ? 'Toque no botão vermelho e fale. Você pode pausar quando quiser.' : 'Este navegador não transcreve por voz. Digite na caixa abaixo ou use o Chrome ou o Edge.',
+    rec: 'Pode falar. Use Pausar para parar um instante sem perder o que já foi dito.',
+    pausa: 'Em pausa. Toque em Continuar para seguir gravando, ou em Finalizar para encerrar.',
+    fim: 'Confira o texto abaixo, corrija se precisar e envie.'
+  };
+  $('dica').textContent = dicas[estado];
+}
+
+/* ---------- reconhecimento de voz ---------- */
+async function ligaTela(){ try{ if('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); }catch(e){} }
+function soltaTela(){ try{ if(wake){ wake.release(); wake = null; } }catch(e){} }
+
+function sinalFala(){
+  $('player').classList.add('falando');
+  clearTimeout(falaTimer);
+  falaTimer = setTimeout(()=>$('player').classList.remove('falando'), 700);
+}
+function consolida(){
+  const t = $('texto').value.trim();
+  base = t ? t + ' ' : '';
+  finais = '';
+}
+function criaRec(){
   rec = new SR();
   rec.lang = 'pt-BR';
   rec.continuous = true;
   rec.interimResults = true;
-  const t = $('texto').value.trim();
-  base = t ? t + ' ' : '';
-  finais = '';
-
   rec.onresult = ev => {
     let parcial = '';
     for(let i = ev.resultIndex; i < ev.results.length; i++){
-      const trecho = ev.results[i][0].transcript;
-      if(ev.results[i].isFinal) finais += trecho + ' ';
-      else parcial += trecho;
+      const tr = ev.results[i][0].transcript;
+      if(ev.results[i].isFinal) finais += tr + ' '; else parcial += tr;
     }
     $('texto').value = base + finais + parcial;
-    enviado = false;
+    enviado = false; atualizaContagem(); sinalFala();
+    const t = $('texto'); t.scrollTop = t.scrollHeight;
   };
+  rec.onspeechstart = sinalFala;
   rec.onerror = ev => {
     if(ev.error === 'not-allowed' || ev.error === 'service-not-allowed'){
-      parar();
-      mostrar('erro', 'O microfone não foi liberado. Permita o uso do microfone no navegador e tente de novo.');
+      pararMotor(); estado = 'idle'; paraRelogio(); soltaTela(); desenha();
+      mostrar('erro', 'O microfone não foi liberado. Permita o uso do microfone no navegador (ícone de cadeado ao lado do endereço) e tente de novo.');
+    } else if(ev.error === 'network'){
+      pausar();
+      mostrar('erro', 'O serviço de voz do navegador ficou sem conexão. A gravação foi pausada; o texto já capturado está salvo. Toque em Continuar para tentar de novo.');
+    } else if(ev.error === 'audio-capture'){
+      pararMotor(); estado = 'idle'; paraRelogio(); soltaTela(); desenha();
+      mostrar('erro', 'Nenhum microfone foi encontrado neste aparelho.');
     }
   };
   rec.onend = () => {
-    if(gravando){
-      base = $('texto').value.trim();
-      base = base ? base + ' ' : '';
-      finais = '';
+    if(estado === 'rec'){            // o navegador encerra sozinho após silêncio: religa
+      consolida();
       try{ rec.start(); }catch(e){}
     }
   };
-  gravando = true;
+}
+function pararMotor(){ try{ if(rec){ rec.onend = null; rec.stop(); } }catch(e){} }
+
+function iniciar(){
+  if(!SR){
+    mostrar('erro', 'Este navegador não faz a transcrição por voz. Use o Chrome ou o Edge, ou digite o texto na caixa abaixo (no celular, o microfone do teclado também serve).');
+    return;
+  }
+  esconderMsg();
+  consolida();
+  criaRec();
+  estado = 'rec';
+  ligaRelogio(); ligaTela(); desenha();
   try{ rec.start(); }catch(e){}
-  manterTelaLigada();
-  $('btnRec').textContent = 'Parar gravação';
-  $('btnRec').classList.add('gravando');
-  $('estado').textContent = 'Gravando… pode falar.';
-  $('estado').classList.add('gravando');
+}
+function pausar(){
+  if(estado !== 'rec') return;
+  paraRelogio();
+  estado = 'pausa';
+  pararMotor(); soltaTela(); desenha();
+}
+function finalizar(){
+  if(estado !== 'rec' && estado !== 'pausa') return;
+  paraRelogio();
+  estado = 'fim';
+  pararMotor(); soltaTela(); desenha();
+  $('texto').focus({preventScroll:true});
+}
+function apagar(){
+  pararMotor(); clearInterval(tick); soltaTela();
+  estado = 'idle'; msAcum = 0; base = finais = '';
+  $('texto').value = ''; enviado = true;
+  atualizaTempo(); atualizaContagem(); desenha();
 }
 
-function parar(){
-  gravando = false;
-  try{ if(rec) rec.stop(); }catch(e){}
-  soltarTela();
-  $('btnRec').textContent = 'Continuar gravação';
-  $('btnRec').classList.remove('gravando');
-  $('estado').classList.remove('gravando');
-  $('estado').textContent = 'Gravação parada. Confira o texto e envie.';
-}
+$('btnPrincipal').addEventListener('click', ()=>{
+  if(estado === 'rec') pausar(); else iniciar();
+});
+$('btnFinalizar').addEventListener('click', finalizar);
 
-$('btnRec').addEventListener('click', ()=> gravando ? parar() : iniciar());
-
-$('btnLimpar').addEventListener('click', ()=>{
-  if(gravando) parar();
-  if($('texto').value.trim() && !confirm('Apagar o que foi transcrito?')) return;
-  $('texto').value = '';
-  $('estado').textContent = '';
-  $('btnRec').textContent = 'Iniciar gravação';
-  enviado = true;
+/* apagar em dois toques, para não perder a fala sem querer */
+$('btnApagar').addEventListener('click', ()=>{
+  const tem = texto() || msAcum > 0 || estado !== 'idle';
+  if(!tem) return;
+  const b = $('btnApagar');
+  if(!b.classList.contains('confirma')){
+    b.classList.add('confirma'); $('rotApagar').textContent = 'Confirmar?';
+    apagarTimer = setTimeout(()=>{ b.classList.remove('confirma'); $('rotApagar').textContent = 'Apagar'; }, 3000);
+    return;
+  }
+  clearTimeout(apagarTimer);
+  b.classList.remove('confirma'); $('rotApagar').textContent = 'Apagar';
+  apagar();
 });
 
+/* texto digitado ou corrigido à mão */
+$('texto').addEventListener('input', ()=>{
+  enviado = false; atualizaContagem();
+  if(estado === 'rec') consolida();
+});
+
+/* ---------- envio ---------- */
 $('btnEnv').addEventListener('click', async ()=>{
-  if(gravando) parar();
+  if(estado === 'rec' || estado === 'pausa') finalizar();
   const dados = {
-    nome: $('nome').value.trim(),
-    setor: $('setor').value.trim(),
-    funcao: $('funcao').value.trim(),
-    tema: $('tema').value.trim(),
-    texto: $('texto').value.trim(),
-    site: $('site').value
+    nome: $('nome').value.trim(), setor: $('setor').value.trim(), funcao: $('funcao').value.trim(),
+    tema: $('tema').value.trim(), texto: $('texto').value.trim(), site: $('site').value
   };
   if(!dados.nome || !dados.setor || !dados.funcao){
-    mostrar('erro', 'Preencha seu nome, setor e função.');
-    return;
+    mostrar('erro', 'Preencha seu nome, setor e função.'); return;
   }
-  if(!dados.texto){
-    mostrar('erro', 'Ainda não há nada para enviar. Grave ou digite sua fala.');
-    return;
-  }
-  if(!API){
-    mostrar('erro', 'O endereço de envio ainda não foi configurado. Avise quem criou a página.');
-    return;
-  }
-  $('btnEnv').disabled = true;
-  $('btnEnv').textContent = 'Enviando…';
+  if(!dados.texto){ mostrar('erro', 'Ainda não há nada para enviar.'); return; }
+  const b = $('btnEnv'); b.disabled = true; b.textContent = 'Enviando…';
   try{
-    const r = await fetch(API, {
-      method: 'POST',
-      headers: {'Content-Type': 'text/plain;charset=utf-8'},
-      body: JSON.stringify(dados)
-    });
+    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(dados) });
     const j = await r.json();
     if(!j.ok) throw new Error(j.erro || 'Não foi possível enviar.');
-    $('texto').value = '';
-    $('tema').value = '';
-    $('estado').textContent = '';
-    $('btnRec').textContent = 'Iniciar gravação';
-    enviado = true;
+    apagar(); $('tema').value = '';
     mostrar('ok', 'Recebemos sua fala. Muito obrigado por contar o que acontece: é assim que a gente consegue entender e buscar solução.');
   }catch(err){
     mostrar('erro', 'Não foi possível enviar agora (' + err.message + '). Seu texto continua aqui, tente de novo em instantes.');
+    b.disabled = !texto();
   }finally{
-    $('btnEnv').disabled = false;
-    $('btnEnv').textContent = 'Enviar';
+    b.textContent = 'Enviar';
+    atualizaContagem();
   }
 });
 
 window.addEventListener('beforeunload', e=>{
-  if(!enviado && $('texto').value.trim()){ e.preventDefault(); e.returnValue = ''; }
+  if(!enviado && texto()){ e.preventDefault(); e.returnValue = ''; }
 });
+
+desenha(); atualizaContagem();
 </script>
 </body>
 </html>
